@@ -39,6 +39,8 @@ const upload = multer({storage: storge});
 // });
 
 router.post('/BBS/createDynamic', upload.array('file',20), function (req, res) {
+  console.log('req');
+  
   // var form = new formidable.IncomingForm();//既处理表单，又处理文件上传
   //设置文件上传文件夹/路径，__dirname是一个常量，为当前路径
   // let uploadDir = path.join(__dirname, "./uploads/");
