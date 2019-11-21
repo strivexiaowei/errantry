@@ -3,6 +3,7 @@ const ObjectID = require("mongodb").ObjectID;
 const url = "mongodb://127.0.0.1:27017"; //数据库服务器的地址
 const dbName = "room"; //数据库的名字
 module.exports = {
+
   login: function (opts, callback) {
     MongoClient.connect(url, {
       useNewUrlParser: true

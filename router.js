@@ -1,132 +1,59 @@
 const router = require('express').Router();
 const expressWs = require('express-ws');
 expressWs(router);
-const multer = require('multer');
 let path = require('path');
-const storage = multer.diskStorage({
-  //文件存储位置
-  destination: (req, file, cb) => {
-    cb(null, path.resolve(__dirname, '../uploads/tmp/'));
-  },
-  //文件名
-  filename: (req, file, cb) => {
-    cb(
-      null,
-      `${Date.now()}_${Math.ceil(
-        Math.random() * 1000
-      )}_multer.${file.originalname.split('.').pop()}`
-    );
-  }
-});
-const uploadCfg = {
-  storage: storage,
-  limits: {
-    //上传文件的大小限制,单位bytes
-    fileSize: 1024 * 1024 * 20
-  }
-};
+const uuid = require('uuid');
+const multer = require('multer');
 const db = require('./db');
-router.get('/login', function(req, res) {
-  let name = req.query.name;
-  let password = req.query.password;
-  let opts = {
-    name,
-    password
-  };
-  db.login(opts, function(result) {
-    if (result) {
-      res.send({
-        code: 200,
-        msg: '登录成功,写的第一个接口',
-        info: result
-      });
-    } else {
-      res.send({
-        code: 400,
-        msg: '请输入正确的用户名和密码'
-      });
-    }
-  });
-});
-router.post('/register', function(req, res) {
-  let opts = req.body;
-  console.log(opts);
-  db.register(opts, function(result) {
-    if (result) {
-      res.send({
-        code: 200,
-        msg: '注册成功',
-        info: result
-      });
-    } else {
-      res.send({
-        code: 400,
-        msg: '注册失败'
-      });
-    }
-  });
-});
-router.get('/queryUserById', function(req, res) {
-  let _id = req.query.id;
-  db.queryUserById(_id, function(result) {
-    if (result) {
-      res.send({
-        code: 200,
-        msg: '查询账户成功',
-        info: result
-      });
-    } else {
-      res.send({
-        code: 400,
-        msg: '没有查询到当前id的账户'
-      });
-    }
-  });
-});
-/**
- * 查询聊天信息
- */
-router.ws('/queryMsg', function(ws, req) {
-  ws.on('message', function(msg) {
-    const opts = JSON.parse(msg);
-    ws.send('dadadad')
-    db.queryMsg(opts, function(result) {
-      if (result) {
-        ws.send(JSON.stringify(result));
-      } else {
-        ws.send('发送失败');
-      }
-    });
-  });
-});
+const storge = multer.diskStorage({
+  destination: function (req, file, cb) {
+      cb(null, 'uploads')
+  },
+  filename: function (req, file, cb) {
+      var fileformat = (file.originalname).split('.');
+      cb(null, file.fieldname+'-'+Date.now()+'.'+fileformat[fileformat.length-1]);
+  }
+})
+const upload = multer({storage: storge});
+// router.get('/login', function (req, res) {
+//   let name = req.query.name;
+//   let password = req.query.password;
+//   let opts = {
+//     name,
+//     password
+//   };
+//   db.login(opts, function (result) {
+//     if (result) {
+//       res.send({
+//         code: 200,
+//         msg: '登录成功,写的第一个接口',
+//         info: result
+//       });
+//     } else {
+//       res.send({
+//         code: 400,
+//         msg: '请输入正确的用户名和密码'
+//       });
+//     }
+//   });
+// });
 
-router.post('/upload', async (req, res) => {
-  let upload = multer(uploadCfg).any();
-  upload(req, res, async err => {
-    if (err) {
-      res.json({
-        path: `//uploads/tmp/${uploadFile.filename}`
-      });
-      console.log(err);
-      return;
-    }
-    console.log(req.files);
-    let uploadFile = req.files[0];
-    res.json({
-      path: `//uploads/tmp/${uploadFile.filename}`
-    });
-  });
-});
-router.ws('/roomlist', function(ws, req) {
-  ws.on('message', function(msg) {
-    const opts = JSON.parse(msg);
-    db.roomlist(opts, function(result) {
-      if (result) {
-        ws.send(JSON.stringify(result));
-      } else {
-        ws.send('获取用户失败');
-      }
-    });
-  });
+router.post('/BBS/createDynamic', upload.array('file',20), function (req, res) {
+  // var form = new formidable.IncomingForm();//既处理表单，又处理文件上传
+  //设置文件上传文件夹/路径，__dirname是一个常量，为当前路径
+  // let uploadDir = path.join(__dirname, "./uploads/");
+  // form.uploadDir = uploadDir;//本地文件夹目录路径
+
+  // form.parse(req, (err, fields, files) => {
+  //   console.log(files);
+  //   // let oldPath = files.cover.path;//这里的路径是图片的本地路径
+  //   // console.log(files.cover.name)//图片传过来的名字
+  //   // let newPath = path.join(path.dirname(oldPath), files.cover.name);
+  //   // //这里我传回一个下载此图片的Url
+  //   // var downUrl = "http://localhost:" + listenNumber + "/uploads/" + files.cover.name;//这里是想传回图片的链接
+  //   // fs.rename(oldPath, newPath, () => {//fs.rename重命名图片名称
+  //   //   res.json({ downUrl: downUrl })
+  //   // })
+  // })
 });
 module.exports = router;
