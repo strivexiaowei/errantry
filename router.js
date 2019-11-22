@@ -7,7 +7,7 @@ const multer = require('multer');
 const db = require('./db');
 const storge = multer.diskStorage({
   destination: function (req, file, cb) {
-      cb(null, 'uploads')
+      cb(null, 'uploads/images')
   },
   filename: function (req, file, cb) {
       var fileformat = (file.originalname).split('.');
@@ -15,47 +15,35 @@ const storge = multer.diskStorage({
   }
 })
 const upload = multer({storage: storge});
-// router.get('/login', function (req, res) {
-//   let name = req.query.name;
-//   let password = req.query.password;
-//   let opts = {
-//     name,
-//     password
-//   };
-//   db.login(opts, function (result) {
-//     if (result) {
-//       res.send({
-//         code: 200,
-//         msg: '登录成功,写的第一个接口',
-//         info: result
-//       });
-//     } else {
-//       res.send({
-//         code: 400,
-//         msg: '请输入正确的用户名和密码'
-//       });
-//     }
-//   });
-// });
+router.post('/BBS/createDynamic', function (req, res) {
+  const opts = req.body;
+  console.log(opts);
+  opts.createTime = +Date.now();
+  db.addDynamic(opts, function (result) {
+    if (result) {
+      res.json({
+        code: 1,
+        desc: '创建动态成功！'
+      });
+    }
+  })
+});
 
-router.post('/BBS/createDynamic', upload.array('file',20), function (req, res) {
-  console.log('req');
-  
-  // var form = new formidable.IncomingForm();//既处理表单，又处理文件上传
-  //设置文件上传文件夹/路径，__dirname是一个常量，为当前路径
-  // let uploadDir = path.join(__dirname, "./uploads/");
-  // form.uploadDir = uploadDir;//本地文件夹目录路径
+router.post('/BBS/uploads', upload.array('file',20), function (req, res) {
+  db.addFileImage(req.files[0], function (result) {
+    console.log(result);
+    res.json(result);
+  });
+});
 
-  // form.parse(req, (err, fields, files) => {
-  //   console.log(files);
-  //   // let oldPath = files.cover.path;//这里的路径是图片的本地路径
-  //   // console.log(files.cover.name)//图片传过来的名字
-  //   // let newPath = path.join(path.dirname(oldPath), files.cover.name);
-  //   // //这里我传回一个下载此图片的Url
-  //   // var downUrl = "http://localhost:" + listenNumber + "/uploads/" + files.cover.name;//这里是想传回图片的链接
-  //   // fs.rename(oldPath, newPath, () => {//fs.rename重命名图片名称
-  //   //   res.json({ downUrl: downUrl })
-  //   // })
-  // })
+router.get('/uploads/images/*', function(req, res) {
+  console.log(req.url);
+  const reqUrlArr = req.url.split('/');
+  if (reqUrlArr[reqUrlArr.length - 1] === 'view') {
+    let _id =  reqUrlArr.splice(-2)[0];
+    db.queryFileById(_id, function (result) {
+      res.sendFile( __dirname + "/" + result.path);
+    });
+  }
 });
 module.exports = router;

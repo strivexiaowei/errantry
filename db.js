@@ -1,153 +1,90 @@
 const MongoClient = require("mongodb").MongoClient;
 const ObjectID = require("mongodb").ObjectID;
-const url = "mongodb://127.0.0.1:27017"; //数据库服务器的地址
-const dbName = "room"; //数据库的名字
+const url = "mongodb://127.0.0.1:27017"; // 数据库服务器的地址
+const dbName = 'bbs'
 module.exports = {
-
-  login: function (opts, callback) {
-    MongoClient.connect(url, {
-      useNewUrlParser: true
-    }, function (err, client) {
-      if (err) {
-        return console.log("链接服务器失败了", err);
-      }
-      const db = client.db(dbName);
-      db.collection('user').findOne(opts, function (err, result) {
-        if (err) {
-          return console.log("服务器链接失败", err);
-        }
-        callback(result);
-      })
-      client.close();
-    })
+  addFileImage: function (opts, callback) {
+    addInsertOne({ url, dbName, listName: 'files', opts, callback });
   },
-  register: function (opts,callback) {
-    MongoClient.connect(url, {
-      useNewUrlParser: true
-    }, function (err, client) {
-      if (err) {
-        return console.log("链接服务器失败了", err);
-      }
-      const db = client.db(dbName);
-      db.collection('user').insertOne(opts, function (err, result) {
-        if (err) {
-          return console.log("服务器链接失败", err);
-        }
-        callback(result);
-      })
-      client.close();
-    })
+  queryFileById: function (_id, callback) {
+    const opts = { _id: ObjectID(_id) };
+    queryInsertOne({ url, dbName, listName: 'files', opts, callback });
   },
-  queryUserById: function (_id, callback) {
-    MongoClient.connect(url, {
-      useNewUrlParser: true
-    }, function (err, client) {
-      if (err) {
-        return console.log("链接服务器失败了", err);
-      }
-      const db = client.db(dbName);
-      db.collection('user').findOne({_id:ObjectID(_id)}, function (err, result) {
-        if (err) {
-          return console.log("服务器链接失败", err);
-        }
-        callback(result);
-      })
-      client.close();
-    })
+  addDynamic: function (opts, callback) {
+    addInsertOne({ url, dbName, listName: 'dynamic', opts, callback});
   },
-  roomlist: function (opts, callback) {
-    MongoClient.connect(url, {
-      useNewUrlParser: true
-    }, function (err, client) {
-      if (err) {
-        return console.log("链接服务器失败了", err);
-      }
-      const db = client.db(dbName);
-      // console.log(opts);
-      db.collection('roomlist').findOne({
-        nickname: opts.nickname
-      }, function (err, result) {
-        if (err) {
-          return console.log("服务器链接失败", err);
-        }
-        if (result) {
-          let whereStr = {
-            nickname: opts.nickname
-          }; // 查询条件
-          // console.log(whereStr);
-          let updateStr = {
-            $set: {
-              isOnline: opts.isOnline
-            }
-          };
-          console.log(updateStr);
-          db.collection("roomlist").updateOne(whereStr, updateStr, function (err, info) {
-            if (err) {
-              return console.log("服务器链接失败", err);
-            }
-            db.collection("roomlist").find().toArray(function (err, res) {
-              if (err) {
-                return err;
-              }
-              callback(res)
-            })
-            client.close();
-          });
-        } else {
-          db.collection("roomlist").insertOne(opts, function (err, res) {
-            if (err) {
-              return console.log("服务器链接失败", err);
-            }
-            db.collection("roomlist").find().toArray(function (err, res) {
-              if (err) {
-                return err;
-              }
-              callback(res)
-            })
-            client.close();
-          });
-        }
-      })
-    })
-  },
-  queryMsg: function(opts,callback) {
-    if (opts.nickname) {
-      MongoClient.connect(url, {
-        useNewUrlParser: true
-      }, function (err, client) {
-        if (err) {
-          return console.log("链接服务器失败了", err);
-        }
-        const db = client.db(dbName);
-        db.collection('message').insertOne(opts, function (err, result) {
-          if (err) {
-            return console.log("服务器链接失败", err);
-          }
-          db.collection("message").find().toArray(function (err, res) {
-            if (err) {
-              return err;
-            }
-            callback(res)
-          })
-          client.close();
-        })
-      })
-    } else {
-      MongoClient.connect(url, {
-        useNewUrlParser: true
-      }, function (err, client) {
-        if (err) {
-          return console.log("链接服务器失败了", err);
-        }
-        const db = client.db(dbName);
-        db.collection('message').find().toArray(function (err, result) {
-          if (err) {
-            return console.log("服务器链接失败", err);
-          }
-          callback(result);
-        })
-        client.close();
-      })
-    }
+  queryDynamicList: function (opts, callback) {
+    queryToArray({ url, dbName, listName: 'dynamic', opts, callback});
   }
+}
+
+// 添加数据
+function addInsertOne({ url, dbName, listName, opts, callback } = {}) {
+  MongoClient.connect(url, {
+    useNewUrlParser: true
+  }, function (err, client) {
+    if (err) {
+      console.log(opts);
+      return console.log("链接服务器失败了", err);
+    }
+    const db = client.db(dbName);
+    db.collection(listName).insertOne(opts, function (err, result) {
+      if (err) {
+        return console.log("服务器链接失败", err);
+      }
+      // console.log(result);
+      // callback(result);
+      if (result) {
+        db.collection(listName).findOne(opts, function (err, json) {
+          if (err) {
+            console.log(opts);
+            return console.log("链接服务器失败了", err);
+          }
+          callback(json);
+        });
+        client.close();
+      } else {
+        client.close();
+      }
+    })
+  })
+}
+
+// 查找一条数据
+function queryInsertOne({ url, dbName, listName, opts, callback }) {
+  MongoClient.connect(url, {
+    useNewUrlParser: true
+  }, function (err, client) {
+    if (err) {
+      console.log(opts);
+      return console.log("链接服务器失败了", err);
+    }
+    const db = client.db(dbName);
+    db.collection(listName).findOne(opts, function (err, result) {
+      if (err) {
+        return console.log("服务器链接失败", err);
+      }
+      callback(result);
+    })
+    client.close();
+  })
+}
+
+// 查询多条数据
+function queryToArray({ url, dbName, listName, opts, callback }) {
+  MongoClient.connect(url, {useNewUrlParser: true}, function (err, client) {
+    if (err) {
+      return console.log("链接服务器失败了", err);
+    }
+    const limit = opts.pageSize;
+    const skip = opts.page * limit;
+    const db = client.db(dbName);
+    db.collection(listName).find().skip(skip).limit(limit).toArray(function (err, result) {
+      if (err) {
+        return console.log("链接服务器失败了", err);
+      }
+      callback(result)
+    });
+    client.close();
+  })
 }
