@@ -20,6 +20,6 @@ app.use(function(req, res, next) {
 
 app.use(router);
 
-app.listen(8080, function() {
+app.listen(80, function() {
   console.log("服务端已经上线了,请访问：http://localhost: 80");
 });
