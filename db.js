@@ -15,6 +15,21 @@ module.exports = {
   },
   queryDynamicList: function (opts, callback) {
     queryToArray({ url, dbName, listName: 'dynamic', opts, callback});
+  },
+  registerBBS: function (opts, callback) {
+    addInsertOne({ url, dbName, listName: 'users', opts, callback });
+  },
+  loginBBS: function (opts, callback) {
+    queryInsertOne({ url, dbName, listName: 'users', opts, callback });
+  },
+  addLogin: function (opts, callback) {
+    addInsertOne({url, dbName, listName: 'users', opts, callback})
+  },
+  addOneRoomMsg: function (opts, callback) {
+    addInsertOne({url, dbName, listName: 'room', opts, callback});
+  },
+  queryAllMsg: function (opts, callback) {
+    queryAllToArry({url, dbName, listName: 'room', opts, callback});
   }
 }
 
@@ -76,10 +91,26 @@ function queryToArray({ url, dbName, listName, opts, callback }) {
     if (err) {
       return console.log("链接服务器失败了", err);
     }
-    const limit = opts.pageSize;
-    const skip = opts.page * limit;
+    const limit = +opts.pageSize;
+    const skip = (+opts.page - 1) * limit;
     const db = client.db(dbName);
     db.collection(listName).find().skip(skip).limit(limit).toArray(function (err, result) {
+      if (err) {
+        return console.log("链接服务器失败了", err);
+      }
+      callback(result)
+    });
+    client.close();
+  })
+}
+// 查询全部信息
+function queryAllToArry({ url, dbName, listName, opts, callback }) {
+  MongoClient.connect(url, {useNewUrlParser: true}, function (err, client) {
+    if (err) {
+      return console.log("链接服务器失败了", err);
+    }
+    const db = client.db(dbName);
+    db.collection(listName).find().toArray(function (err, result) {
       if (err) {
         return console.log("链接服务器失败了", err);
       }
