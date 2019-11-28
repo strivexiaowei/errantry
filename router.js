@@ -37,6 +37,7 @@ router.post('/BBS/createDynamic', function (req, res) {
 });
 
 router.post('/BBS/uploads', upload.array('file',20), function (req, res) {
+  console.log(req.files[0]);
   db.addFileImage(req.files[0], function (result) {
     res.json(result);
   });
