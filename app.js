@@ -10,7 +10,7 @@ app.use(
   })
 );
 app.use(express.static('upload')); // 这个很重要，必须要这个才能拿到图片链接，而不是进入路由，有兴趣的同学可以删掉试验一下
-app.use('/upload',express.static('upload'));  
+app.use('/upload',express.static('upload'));
 app.use(bodyParser.json());
 // 中间件, 我整个服务器的接口全部允许跨域;
 app.use(function(req, res, next) {

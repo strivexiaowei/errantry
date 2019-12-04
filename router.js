@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const expressWs = require('express-ws');
+const pinyin = require("chinese-to-pinyin");
 expressWs(router);
 let path = require('path');
 const uuid = require('uuid');
@@ -15,6 +16,41 @@ const storge = multer.diskStorage({
   }
 });
 const upload = multer({storage: storge});
+router.post('/BBS/addContact', function (req, res) {
+  const opts = req.body;
+  db.addContact(opts, function (result) {
+    res.json(result);
+  });
+});
+router.get('/BBS/queryContactList', function(req, res) {
+	// const opts = req.body;
+	// const 
+	db.queryContactList({}, function(result) {
+		const jsonData = 'ABCDEFGHIJKLMNOPQRSTWXYZ';
+		const json = [];
+		for (let i = 0; i < jsonData.length; i++) {
+			json.push({
+				letter: jsonData[i],
+				data: result.filter(item => {
+					const letter = pinyin(item.name, { keepRest: true, firstCharacter: true }).trim()[0].toUpperCase();
+					return letter === jsonData[i];
+				})
+			});
+		}
+    res.json(json);
+	});
+});
+router.post('/BBS/deleteContact', function (req, res) {
+	const opts = req.body;
+	db.deleteContactById(opts._id, function(result) {
+		if(result) {
+			res.json({
+				code: 1,
+				desc: '删除联系人成功'
+			})
+		}
+	})
+})
 router.post('/BBS/dynamicList', function (req, res) {
   const opts = req.body;
   db.queryDynamicList(opts, function (result) {
@@ -37,7 +73,6 @@ router.post('/BBS/createDynamic', function (req, res) {
 });
 
 router.post('/BBS/uploads', upload.array('file',20), function (req, res) {
-  console.log(req.files[0]);
   db.addFileImage(req.files[0], function (result) {
     res.json(result);
   });
@@ -45,12 +80,14 @@ router.post('/BBS/uploads', upload.array('file',20), function (req, res) {
 
 router.get('/uploads/images/*', function(req, res) {
   const reqUrlArr = req.url.split('/');
-  if (reqUrlArr[reqUrlArr.length - 1] === 'view') {
-    let _id =  reqUrlArr.splice(-2)[0];
-    db.queryFileById(_id, function (result) {
-      res.sendFile( __dirname + "/" + result.path);
-    });
-  }
+	if (reqUrlArr.length <= 5) {
+		if (reqUrlArr[reqUrlArr.length - 1] === 'view') {
+		  let _id =  reqUrlArr.splice(-2)[0];
+		  db.queryFileById(_id, function (result) {
+		    res.sendFile( __dirname + "/" + result.path);
+		  });
+		}
+	}
 });
 
 router.post('/BBS/register', function(req, res) {
@@ -109,5 +146,5 @@ router.ws('/BBS/getMsg', function (ws, req) {
       }
     });
   });
-})
+});
 module.exports = router;

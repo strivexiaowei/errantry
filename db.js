@@ -30,7 +30,17 @@ module.exports = {
   },
   queryAllMsg: function (opts, callback) {
     queryAllToArry({url, dbName, listName: 'room', opts, callback});
-  }
+  },
+	addContact: function (opts, callback) {
+	  addInsertOne({ url, dbName, listName: 'contact', opts, callback });
+	},
+	queryContactList: function (opts, callback) {
+		queryAllToArry({url, dbName, listName: 'contact', opts, callback});
+	},
+	deleteContactById: function (_id, callback) {
+		const opts = { _id: ObjectID(_id) };
+		deleteInsertOne({ url, dbName, listName: 'contact', opts, callback });
+	}
 }
 
 // 添加数据
@@ -104,7 +114,7 @@ function queryToArray({ url, dbName, listName, opts, callback }) {
   })
 }
 // 查询全部信息
-function queryAllToArry({ url, dbName, listName, opts, callback }) {
+function queryAllToArry({ url, dbName, opts, listName, callback }) {
   MongoClient.connect(url, {useNewUrlParser: true}, function (err, client) {
     if (err) {
       return console.log("链接服务器失败了", err);
@@ -118,4 +128,24 @@ function queryAllToArry({ url, dbName, listName, opts, callback }) {
     });
     client.close();
   })
+}
+
+// 根据id删除数据
+function deleteInsertOne({ url, dbName, listName, opts, callback }) {
+	MongoClient.connect(url, {
+	  useNewUrlParser: true
+	}, function (err, client) {
+	  if (err) {
+	    console.log(opts);
+	    return console.log("链接服务器失败了", err);
+	  }
+	  const db = client.db(dbName);
+	  db.collection(listName).deleteOne(opts, function (err, result) {
+	    if (err) {
+	      return console.log("服务器链接失败", err);
+	    }
+	    callback(result);
+	  })
+	  client.close();
+	})
 }
