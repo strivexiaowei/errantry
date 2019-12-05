@@ -22,9 +22,9 @@ router.post('/BBS/addContact', function (req, res) {
     res.json(result);
   });
 });
+
 router.get('/BBS/queryContactList', function(req, res) {
 	// const opts = req.body;
-	// const 
 	db.queryContactList({}, function(result) {
 		const jsonData = 'ABCDEFGHIJKLMNOPQRSTWXYZ';
 		const json = [];
@@ -40,6 +40,7 @@ router.get('/BBS/queryContactList', function(req, res) {
     res.json(json);
 	});
 });
+
 router.post('/BBS/deleteContact', function (req, res) {
 	const opts = req.body;
 	db.deleteContactById(opts._id, function(result) {
@@ -51,12 +52,49 @@ router.post('/BBS/deleteContact', function (req, res) {
 		}
 	})
 })
+
+router.post('/BBS/keywordContact', function (req, res) {
+	const findval = new RegExp(req.body.findval);
+	db.keywordContact(findval, function(result) {
+		const jsonData = 'ABCDEFGHIJKLMNOPQRSTWXYZ';
+		const json = [];
+		for (let i = 0; i < jsonData.length; i++) {
+			json.push({
+				letter: jsonData[i],
+				data: result.filter(item => {
+					const letter = pinyin(item.name, { keepRest: true, firstCharacter: true }).trim()[0].toUpperCase();
+					return letter === jsonData[i];
+				})
+			});
+		}
+		res.json(json);
+	});
+});
+
+router.post('/BBS/eidtContact', function (req, res) {
+	const opts = req.body;
+	db.eidtContact(opts, function(result) {
+		if(result) {
+			res.json({
+				code: 1,
+				desc: '编辑成功'
+			})
+		} else {
+			res.json({
+				code: 2,
+				desc: '编辑失败'
+			})
+		}
+	});
+});
+
 router.post('/BBS/dynamicList', function (req, res) {
   const opts = req.body;
   db.queryDynamicList(opts, function (result) {
     res.json(result);
   });
 });
+
 router.post('/BBS/createDynamic', function (req, res) {
   const opts = req.body;
   console.log(opts);
@@ -96,6 +134,7 @@ router.post('/BBS/register', function(req, res) {
     res.json(result);
   });
 });
+
 router.post('/BBS/login', function(req, res) {
  const opts = req.body;
  db.loginBBS(opts, function (result) {
@@ -113,6 +152,7 @@ router.post('/BBS/login', function(req, res) {
    }
  });
 });
+
 router.post('/BBS/appLogin', function (req, res) {
   const opts = req.body;
   db.loginBBS(opts, function (result) {
@@ -131,12 +171,14 @@ router.post('/BBS/appLogin', function (req, res) {
     }
   })
 });
+
 router.post('/BBS/getMsgList', function (req, res) {
   const opts = {};
   db.queryAllMsg(opts, function (result) {
     res.json(result);
   });
 });
+
 router.ws('/BBS/getMsg', function (ws, req) {
   ws.on('message', function(msg) {
     const opts =  JSON.parse(msg);
@@ -147,4 +189,5 @@ router.ws('/BBS/getMsg', function (ws, req) {
     });
   });
 });
+
 module.exports = router;

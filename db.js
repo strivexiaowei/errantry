@@ -40,6 +40,12 @@ module.exports = {
 	deleteContactById: function (_id, callback) {
 		const opts = { _id: ObjectID(_id) };
 		deleteInsertOne({ url, dbName, listName: 'contact', opts, callback });
+	},
+	keywordContact: function(findval, callback) {
+		keywordAllToArry({ url, dbName, findval, listName: 'contact', callback });
+	},
+	eidtContact: function(opts, callback) {
+		eidtOneById({ url, dbName, opts, listName: 'contact', callback })
 	}
 }
 
@@ -146,6 +152,44 @@ function deleteInsertOne({ url, dbName, listName, opts, callback }) {
 	    }
 	    callback(result);
 	  })
+	  client.close();
+	})
+}
+
+// 关键字查询
+function keywordAllToArry({ url, dbName, findval, listName, callback }) {
+	MongoClient.connect(url, {useNewUrlParser: true}, function (err, client) {
+	  if (err) {
+	    return console.log("链接服务器失败了", err);
+	  }
+	  const db = client.db(dbName);
+	  db.collection(listName).find({$or:[{name:findval},{mobile:findval}]}).toArray(function (err, result) {
+	    if (err) {
+	      return console.log("链接服务器失败了", err);
+	    }
+	    callback(result)
+	  });
+	  client.close();
+	})
+}
+// 修改数据
+function eidtOneById({ url, dbName, opts, listName, callback }) {
+	MongoClient.connect(url, {useNewUrlParser: true}, function (err, client) {
+	  if (err) {
+	    return console.log("链接服务器失败了", err);
+	  }
+	  const db = client.db(dbName);
+		const whereStr = { _id: ObjectID(opts._id) };
+		delete opts._id;
+		const updateStr = { $set: {
+			...opts
+		}};
+	  db.collection(listName).updateOne(whereStr, updateStr, function (err, result) {
+	    if (err) {
+	      return console.log("链接服务器失败了", err);
+	    }
+	    callback(result)
+	  });
 	  client.close();
 	})
 }
